@@ -62,9 +62,33 @@ class Artist:
             tracks.extend(artist.get_top_tracks_with_bpm(bpm))
         return tracks
 
+    def get_recommended_tracks_from_top_tracks(self):
+        top_track_ids = [track.id for track in self.get_top_tracks()]
+        recommendations = get_spotify_recommendations(top_track_ids)
+        return recommendations
+
+    def get_recommended_tracks_from_top_tracks_with_bpm(self, bpm):
+        tracks = self.get_recommended_tracks_from_top_tracks()
+        return filter_matching_bpm(tracks, bpm)
+
+
+def chunked_array(array, size):
+    return [array[i:i + size] for i in range(0, len(array), size)]
+
+
+def get_spotify_recommendations(track_ids):
+    chunks = chunked_array(track_ids, 3)
+    results = []
+    for chunk in chunks:
+        tracks = spotify.recommendations(seed_tracks=chunk, limit=100)["tracks"]
+        results.append(Track(track['id'], track['name'], track['artists'][0]['name']) for track in tracks)
+    combined_results = [item for sublist in results for item in sublist]
+    return combined_results
+
 
 def filter_matching_bpm(tracks, desired_tempo):
-    tempi = spotify.audio_features(tracks=[track.id for track in tracks])
+    track_ids = [track.id for track in tracks]
+    tempi = spotify.audio_features(tracks=track_ids)
     return [track for track, tempo in zip(tracks, tempi) if is_good_tempo(tempo['tempo'], desired_tempo)]
 
 
@@ -91,13 +115,12 @@ def run():
     artist = find_artist("eminem")
     bpm = 170
     tracks = TrackList()
-    tracks.add(artist.get_top_tracks_with_bpm(bpm))
-    tracks.add(artist.get_related_artists_top_tracks(bpm))
-    tracks.add(artist.get_recommended_tracks_from_top_tracks(bpm))
-    for track in tracks:
-        print(track)
-    # tracks = artist.get_top_tracks_with_bpm(bpm)
-    # related_artist_tracks = artist.find_related_artists_tracks(bpm)
+    artist.get_recommended_tracks_from_top_tracks_with_bpm(150)
+    # tracks.add(artist.get_top_tracks_with_bpm(bpm))
+    # tracks.add(artist.get_related_artists_top_tracks(bpm))
+    # tracks.add(artist.get_recommended_tracks_from_top_tracks(bpm))
+    # for track in tracks:
+    #    print(track)
 
 
 run()
