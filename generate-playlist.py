@@ -1,12 +1,15 @@
 #! /usr/bin/env python
+
 from dataclasses import dataclass
 
 import spotipy
 from spotipy.oauth2 import SpotifyClientCredentials
 
+from spotify_credentials import SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET
+
 credentials = SpotifyClientCredentials(
-    client_id="",
-    client_secret=""
+    client_id=SPOTIFY_CLIENT_ID,
+    client_secret=SPOTIFY_CLIENT_SECRET
 )
 spotify = spotipy.Spotify(auth_manager=credentials)
 
@@ -49,7 +52,8 @@ def find_artist(desired_artist):
 
 def run():
     root_artist = find_artist("eminem")
-    root_artist.find_top_10_track_ids(170)
+    tracks = root_artist.find_top_10_track_ids(170)
+    print(tracks)
 
 
 run()
