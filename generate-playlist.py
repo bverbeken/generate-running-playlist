@@ -19,11 +19,25 @@ class Artist:
     name: str
     uri: str
     img: str
+    top_tracks = None
+    related_artists = None
 
-    def find_top_10_track_ids(self, desired_tempo=180):
-        json = spotify.artist_top_tracks(self.uri)["tracks"]
-        track_ids = [x['id'] for x in json]
-        return filter_matching_bpm(track_ids, desired_tempo)
+    def get_top_tracks(self):
+        if self.top_tracks is None:
+            json = spotify.artist_top_tracks(self.uri)["tracks"]
+            self.top_tracks = [track['id'] for track in json]
+        return self.top_tracks
+
+    def get_top_tracks_with_bpm(self, desired_tempo=180):
+        track_ids = self.get_top_tracks()
+        bpm = filter_matching_bpm(track_ids, desired_tempo)
+        return bpm
+
+    def get_related_artists(self):
+        if self.related_artists is None:
+            related_artists = spotify.artist_related_artists(self.uri)["artists"]
+            self.related_artists = [Artist(x['name'], x['uri'], x['images'][0]["url"]) for x in related_artists]
+        return self.related_artists
 
 
 def filter_matching_bpm(track_ids, desired_tempo):
@@ -52,8 +66,15 @@ def find_artist(desired_artist):
 
 def run():
     root_artist = find_artist("eminem")
-    tracks = root_artist.find_top_10_track_ids(170)
-    print(tracks)
+    bpm = 170
+    tracks = []
+    tracks.extend(root_artist.get_top_tracks_with_bpm(bpm))
+    for artist in root_artist.get_related_artists():
+        tracks.extend(artist.get_top_tracks_with_bpm(bpm))
+    for track_id in tracks:
+        print(track_id)
+    # tracks = root_artist.get_top_tracks_with_bpm(bpm)
+    # related_artist_tracks = root_artist.find_related_artists_tracks(bpm)
 
 
 run()
