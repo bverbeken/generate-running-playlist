@@ -102,6 +102,7 @@ def filter_matching_bpm(tracks, bpm):
     combined_results = [item for sublist in results for item in sublist]
     return [track for track, tempo in zip(tracks, combined_results) if is_good_tempo(tempo['tempo'], bpm)]
 
+
 def is_good_tempo(actual_tempo, wanted_tempo):
     treshold = 2
     lower = wanted_tempo - treshold
