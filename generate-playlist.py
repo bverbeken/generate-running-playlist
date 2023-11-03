@@ -5,6 +5,7 @@ tempo_in_bpm = 170
 
 # ------------------------------------------------------------------------------------------------------------
 
+import random
 from dataclasses import dataclass
 
 import spotipy
@@ -23,12 +24,17 @@ spotify = spotipy.Spotify(auth_manager=credentials)
 class TrackList:
     tracks = []
 
-    def add(self, tracks):
-        self.tracks.extend(tracks)
+    def add(self, new_tracks):
+        self.tracks.extend(new_tracks)
+        while len(self.tracks) > 100:
+            self.tracks.pop(random.randint(0, len(self.tracks) - 1))
         return self
 
     def __iter__(self):
         return iter(self.tracks)
+
+    def __len__(self):
+        return len(self.tracks)
 
 
 @dataclass
@@ -141,6 +147,7 @@ def run():
               )
     for track in tracks:
         print(track)
+    print(len(tracks))
 
 
 run()
