@@ -56,7 +56,7 @@ class Artist:
             self.related_artists = [Artist(x['name'], x['uri'], x['images'][0]["url"]) for x in related_artists]
         return self.related_artists
 
-    def get_related_artists_top_tracks(self, bpm):
+    def get_related_artists_top_tracks_with_bpm(self, bpm):
         tracks = []
         for artist in self.get_related_artists():
             tracks.extend(artist.get_top_tracks_with_bpm(bpm))
@@ -88,8 +88,13 @@ def get_spotify_recommendations(track_ids):
 
 def filter_matching_bpm(tracks, desired_tempo):
     track_ids = [track.id for track in tracks]
-    tempi = spotify.audio_features(tracks=track_ids)
-    return [track for track, tempo in zip(tracks, tempi) if is_good_tempo(tempo['tempo'], desired_tempo)]
+    chunked_track_ids = chunked_array(track_ids, 10)
+    results = []
+    for chunk in chunked_track_ids:
+        tempi = spotify.audio_features(tracks=chunk)
+        results.append(tempi)
+    combined_results = [item for sublist in results for item in sublist]
+    return [track for track, tempo in zip(tracks, combined_results) if is_good_tempo(tempo['tempo'], desired_tempo)]
 
 
 def is_good_tempo(actual_tempo, desired_tempo):
@@ -115,12 +120,11 @@ def run():
     artist = find_artist("eminem")
     bpm = 170
     tracks = TrackList()
-    artist.get_recommended_tracks_from_top_tracks_with_bpm(150)
-    # tracks.add(artist.get_top_tracks_with_bpm(bpm))
-    # tracks.add(artist.get_related_artists_top_tracks(bpm))
-    # tracks.add(artist.get_recommended_tracks_from_top_tracks(bpm))
-    # for track in tracks:
-    #    print(track)
+    tracks.add(artist.get_recommended_tracks_from_top_tracks_with_bpm(bpm))
+    tracks.add(artist.get_top_tracks_with_bpm(bpm))
+    tracks.add(artist.get_related_artists_top_tracks_with_bpm(bpm))
+    for track in tracks:
+        print(track)
 
 
 run()
