@@ -28,7 +28,7 @@ class TrackList:
         return self
 
     def __iter__(self):
-        return self.tracks.__iter__()
+        return iter(self.tracks)
 
 
 @dataclass
