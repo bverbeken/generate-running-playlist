@@ -141,14 +141,14 @@ def find_artist(desired_artist):
 
 def run():
     artist = find_artist(source)
-    tracks = (TrackList()
+    track_list = (TrackList()
               .add(artist.list_top_tracks(tempo_in_bpm))
               .add(artist.list_recommended_tracks(tempo_in_bpm))
               .add(artist.list_related_artist_top_tracks(tempo_in_bpm))
               )
-    for track in tracks:
+    for track in track_list:
         print(track)
-    print(len(tracks))
+    print(len(track_list))
 
 
 run()
