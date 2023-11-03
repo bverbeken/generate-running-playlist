@@ -100,10 +100,20 @@ def filter_matching_bpm(tracks, bpm):
         audio_features = spotify.audio_features(tracks=chunk)
         results.append(audio_features)
     combined_results = [item for sublist in results for item in sublist]
-    return [track for track, tempo in zip(tracks, combined_results) if is_good_tempo(tempo['tempo'], bpm)]
+
+    def fits_filters(af): (
+            has_bpm(af['tempo'], bpm) and
+            has_four_four_time(af['time_signature'])
+    )
+
+    return [track for track, tempo in zip(tracks, combined_results) if fits_filters]
 
 
-def is_good_tempo(actual_tempo, wanted_tempo):
+def has_four_four_time(time_signature):
+    return time_signature == 4
+
+
+def has_bpm(actual_tempo, wanted_tempo):
     treshold = 2
     lower = wanted_tempo - treshold
     upper = wanted_tempo + treshold
