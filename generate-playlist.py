@@ -50,13 +50,13 @@ class Artist:
         tracks = self._get_top_tracks()
         return filter_matching_bpm(tracks, bpm)
 
-    def list_related_artist_tracks(self, bpm):
+    def list_related_artist_top_tracks(self, bpm):
         tracks = []
         for artist in self._get_related_artists():
             tracks.extend(artist.list_top_tracks(bpm))
         return tracks
 
-    def get_recommended_tracks_from_top_tracks_with_bpm(self, bpm):
+    def list_recommended_tracks(self, bpm):
         tracks = self._get_recommended_tracks_from_top_tracks()
         return filter_matching_bpm(tracks, bpm)
 
@@ -136,8 +136,8 @@ def run():
     artist = find_artist(source)
     tracks = (TrackList()
               .add(artist.list_top_tracks(tempo_in_bpm))
-              .add(artist.get_recommended_tracks_from_top_tracks_with_bpm(tempo_in_bpm))
-              .add(artist.list_related_artist_tracks(tempo_in_bpm))
+              .add(artist.list_recommended_tracks(tempo_in_bpm))
+              .add(artist.list_related_artist_top_tracks(tempo_in_bpm))
               )
     for track in tracks:
         print(track)
