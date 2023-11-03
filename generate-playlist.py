@@ -2,6 +2,7 @@
 
 source = "Eminem"
 tempo_in_bpm = 170
+max_playlist_size = 100
 
 # ------------------------------------------------------------------------------------------------------------
 
@@ -26,7 +27,7 @@ class TrackList:
 
     def add(self, new_tracks):
         self.tracks.extend(new_tracks)
-        while len(self.tracks) > 100:
+        while len(self.tracks) > max_playlist_size:
             self.tracks.pop(random.randint(0, len(self.tracks) - 1))
         return self
 
