@@ -1,4 +1,7 @@
 #! /usr/bin/env python
+import time
+
+import requests
 
 source = "Eminem"
 tempo_in_bpm = 170
@@ -30,7 +33,7 @@ auth_manager = SpotifyOAuth(
 auth_code = None
 
 
-def get_token():
+def get_token():  # TODO Cache
     def start_callback_server():
         class SpotifyAuthHandler(http.server.SimpleHTTPRequestHandler):
             def do_GET(self):
@@ -45,7 +48,6 @@ def get_token():
                     self.end_headers()
                     self.wfile.write(b"Authentication successful! You can close this window.")
                 else:
-                    # If 'code' parameter is not present, send an error message
                     self.send_response(400)
                     self.send_header('Content-Type', 'text/html')
                     self.end_headers()
@@ -70,6 +72,17 @@ def get_token():
 spotify = spotipy.Spotify(auth=get_token())
 
 
+def get_user_id():
+    user_info_url = "https://api.spotify.com/v1/me"
+    user_header = {
+        "Authorization": f"Bearer {get_token()}"
+    }
+    r = requests.get(user_info_url, headers=user_header)
+    user_data = r.json()
+    username = user_data['id']
+    return username
+
+
 @dataclass
 class TrackList:
     tracks = []
@@ -86,12 +99,13 @@ class TrackList:
     def __len__(self):
         return len(self.tracks)
 
-    def create_playlist(self):
-        // TODO
-        playlist_name = "Test Playlist - AUTOMATICALLY GENERATED"
-        playlist = spotify.user_playlist_create(user_id, playlist_name)
-        playlist_id = playlist["id"]
-        print(playlist_id)
+    def create_playlist(self, name):
+        user_id = get_user_id()
+        playlist_id = spotify.user_playlist_create(user_id, name)["id"]
+        spotify.playlist_add_items(playlist_id, self.track_ids())
+
+    def track_ids(self):
+        return [track.id for track in self.tracks]
 
 
 @dataclass
@@ -198,11 +212,11 @@ def find_artist(desired_artist):
 def run():
     artist = find_artist(source)
     track_list = (TrackList()
-                  .add(artist.list_top_tracks(tempo_in_bpm))
-                  # .add(artist.list_recommended_tracks(tempo_in_bpm))
+                  # .add(artist.list_top_tracks(tempo_in_bpm))
+                  .add(artist.list_recommended_tracks(tempo_in_bpm))
                   # .add(artist.list_related_artist_top_tracks(tempo_in_bpm))
                   )
-    track_list.create_playlist()
+    track_list.create_playlist(f"GENERATED - {time.time()} - Based on artist: " + artist.name)
 
 
 run()
