@@ -6,19 +6,68 @@ max_playlist_size = 100
 
 # ------------------------------------------------------------------------------------------------------------
 
+import http.server
 import random
+import socketserver
+import threading
+import webbrowser
 from dataclasses import dataclass
+from urllib.parse import urlparse, parse_qs
 
 import spotipy
-from spotipy.oauth2 import SpotifyClientCredentials
+from spotipy.oauth2 import SpotifyOAuth
 
-from spotify_credentials import SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET
+from spotify_credentials import SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REDIRECT_PORT as PORT
 
-credentials = SpotifyClientCredentials(
+auth_manager = SpotifyOAuth(
     client_id=SPOTIFY_CLIENT_ID,
-    client_secret=SPOTIFY_CLIENT_SECRET
+    client_secret=SPOTIFY_CLIENT_SECRET,
+    redirect_uri=f"http://localhost:{PORT}",
+    scope='playlist-modify-public playlist-modify-private',
+    open_browser=False
 )
-spotify = spotipy.Spotify(auth_manager=credentials)
+
+auth_code = None
+
+
+def get_token():
+    def start_callback_server():
+        class SpotifyAuthHandler(http.server.SimpleHTTPRequestHandler):
+            def do_GET(self):
+                global auth_code
+                url = urlparse(self.path)
+                query_params = parse_qs(url.query)
+
+                if 'code' in query_params:
+                    auth_code = query_params['code'][0]
+                    self.send_response(200)
+                    self.send_header('Content-Type', 'text/html')
+                    self.end_headers()
+                    self.wfile.write(b"Authentication successful! You can close this window.")
+                else:
+                    # If 'code' parameter is not present, send an error message
+                    self.send_response(400)
+                    self.send_header('Content-Type', 'text/html')
+                    self.end_headers()
+                    self.wfile.write(b"Authentication failed: 'code' parameter not found in the query string.")
+                threading.Thread(target=httpd.shutdown, daemon=True).start()
+
+        # Create and start the HTTP server
+        socketserver.TCPServer.allow_reuse_address = True
+        with socketserver.TCPServer(("", PORT), SpotifyAuthHandler) as httpd:
+            httpd.serve_forever()
+
+    auth_url = auth_manager.get_authorize_url()
+    webbrowser.open(auth_url)
+    start_callback_server()
+    if auth_code:
+        return auth_manager.get_access_token(auth_code, as_dict=False)
+    else:
+        # TODO error handling
+        print("Failed to retrieve authentication code.")
+
+
+spotify = spotipy.Spotify(auth=get_token())
 
 
 @dataclass
@@ -36,6 +85,13 @@ class TrackList:
 
     def __len__(self):
         return len(self.tracks)
+
+    def create_playlist(self):
+        // TODO
+        playlist_name = "Test Playlist - AUTOMATICALLY GENERATED"
+        playlist = spotify.user_playlist_create(user_id, playlist_name)
+        playlist_id = playlist["id"]
+        print(playlist_id)
 
 
 @dataclass
@@ -142,13 +198,11 @@ def find_artist(desired_artist):
 def run():
     artist = find_artist(source)
     track_list = (TrackList()
-              .add(artist.list_top_tracks(tempo_in_bpm))
-              .add(artist.list_recommended_tracks(tempo_in_bpm))
-              .add(artist.list_related_artist_top_tracks(tempo_in_bpm))
-              )
-    for track in track_list:
-        print(track)
-    print(len(track_list))
+                  .add(artist.list_top_tracks(tempo_in_bpm))
+                  # .add(artist.list_recommended_tracks(tempo_in_bpm))
+                  # .add(artist.list_related_artist_top_tracks(tempo_in_bpm))
+                  )
+    track_list.create_playlist()
 
 
 run()
