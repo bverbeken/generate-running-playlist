@@ -180,23 +180,23 @@ def filter_matching_bpm(tracks, bpm):
 
     def fits_filters(af): (
             has_bpm(af['tempo'], bpm) and
-            has_four_four_time(af['time_signature'])
+            has_good_signature_for_running(af['time_signature'])
     )
 
     return [track for track, tempo in zip(tracks, combined_results) if fits_filters]
 
 
-def has_four_four_time(time_signature):
-    return time_signature == 4
+def has_good_signature_for_running(time_signature):
+    return time_signature == 4 or time_signature == 2
 
 
-def has_bpm(actual_tempo, wanted_tempo):
+def has_bpm(actual, wanted):
     treshold = 2
-    lower = wanted_tempo - treshold
-    upper = wanted_tempo + treshold
-    return ((lower < actual_tempo < upper) or
-            (lower < actual_tempo * 2 < upper) or
-            (lower < actual_tempo / 2 < upper))
+    lower = wanted - treshold
+    upper = wanted + treshold
+    return ((lower < actual < upper) or
+            (lower < actual * 2 < upper) or
+            (lower < actual / 2 < upper))
 
 
 def find_artist(desired_artist):
@@ -211,11 +211,12 @@ def find_artist(desired_artist):
 
 def run():
     artist = find_artist(source)
-    track_list = (TrackList()
-                  # .add(artist.list_top_tracks(tempo_in_bpm))
-                  .add(artist.list_recommended_tracks(tempo_in_bpm))
-                  # .add(artist.list_related_artist_top_tracks(tempo_in_bpm))
-                  )
+    track_list = (
+        TrackList()
+        .add(artist.list_top_tracks(tempo_in_bpm))
+        .add(artist.list_recommended_tracks(tempo_in_bpm))
+        .add(artist.list_related_artist_top_tracks(tempo_in_bpm))
+    )
     track_list.create_playlist(f"GENERATED - {time.time()} - Based on artist: " + artist.name)
 
 
