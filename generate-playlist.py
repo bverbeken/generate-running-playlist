@@ -4,7 +4,7 @@ import time
 import requests
 
 source = "Eminem"
-tempo_in_bpm = 170
+tempo_in_bpm = 180
 max_playlist_size = 100
 
 # ------------------------------------------------------------------------------------------------------------
@@ -33,7 +33,7 @@ auth_manager = SpotifyOAuth(
 auth_code = None
 
 
-def get_token():  # TODO Cache
+def fetch_authentication_token():
     def start_callback_server():
         class SpotifyAuthHandler(http.server.SimpleHTTPRequestHandler):
             def do_GET(self):
@@ -69,13 +69,10 @@ def get_token():  # TODO Cache
         print("Failed to retrieve authentication code.")
 
 
-spotify = spotipy.Spotify(auth=get_token())
-
-
 def get_user_id():
     user_info_url = "https://api.spotify.com/v1/me"
     user_header = {
-        "Authorization": f"Bearer {get_token()}"
+        "Authorization": f"Bearer {token}"
     }
     r = requests.get(user_info_url, headers=user_header)
     user_data = r.json()
@@ -178,12 +175,14 @@ def filter_matching_bpm(tracks, bpm):
         results.append(audio_features)
     combined_results = [item for sublist in results for item in sublist]
 
-    def fits_filters(af): (
-            has_bpm(af['tempo'], bpm) and
-            has_good_signature_for_running(af['time_signature'])
-    )
+    def fits_filters(af):
+        return (
+                has_bpm(af['tempo'], bpm) and
+                has_good_signature_for_running(af['time_signature'])
+        )
 
-    return [track for track, tempo in zip(tracks, combined_results) if fits_filters]
+    mapped_results = [track for track, tempo in zip(tracks, combined_results) if fits_filters(tempo)]
+    return mapped_results
 
 
 def has_good_signature_for_running(time_signature):
@@ -217,7 +216,11 @@ def run():
         .add(artist.list_recommended_tracks(tempo_in_bpm))
         .add(artist.list_related_artist_top_tracks(tempo_in_bpm))
     )
+    for track in track_list:
+        print(track)
     track_list.create_playlist(f"GENERATED - {time.time()} - Based on artist: " + artist.name)
 
 
+token = fetch_authentication_token()
+spotify = spotipy.Spotify(auth=token)
 run()
