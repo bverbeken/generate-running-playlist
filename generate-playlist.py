@@ -216,8 +216,6 @@ def run():
         .add(artist.list_recommended_tracks(tempo_in_bpm))
         .add(artist.list_related_artist_top_tracks(tempo_in_bpm))
     )
-    for track in track_list:
-        print(track)
     track_list.create_playlist(f"GENERATED - {time.time()} - Based on artist: " + artist.name)
 
 
