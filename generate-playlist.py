@@ -70,14 +70,11 @@ def fetch_authentication_token():
 
 
 def get_user_id():
-    user_info_url = "https://api.spotify.com/v1/me"
-    user_header = {
-        "Authorization": f"Bearer {token}"
-    }
-    r = requests.get(user_info_url, headers=user_header)
-    user_data = r.json()
-    username = user_data['id']
-    return username
+    response = requests.get(
+        url="https://api.spotify.com/v1/me",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    return response.json()['id']
 
 
 @dataclass
