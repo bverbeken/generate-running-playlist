@@ -113,7 +113,6 @@ class Track:
 class Artist:
     name: str
     uri: str
-    img: str
     top_tracks = None
     related_artists = None
 
@@ -140,7 +139,7 @@ class Artist:
     def _get_related_artists(self):
         if self.related_artists is None:
             related_artists = spotify.artist_related_artists(self.uri)["artists"]
-            self.related_artists = [Artist(x['name'], x['uri'], x['images'][0]["url"]) for x in related_artists]
+            self.related_artists = [Artist(x['name'], x['uri']) for x in related_artists]
         return self.related_artists
 
     def _get_recommended_tracks_from_top_tracks(self):
@@ -200,8 +199,7 @@ def find_artist(desired_artist):
     artist = desired_artist_results["artists"]["items"][0]
     return Artist(
         artist['name'],
-        artist["uri"],
-        artist["images"][0]["url"]
+        artist["uri"]
     )
 
 
