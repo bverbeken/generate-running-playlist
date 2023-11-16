@@ -1,26 +1,27 @@
 #! /usr/bin/env python
+import http.server
+import random
+import socketserver
+import threading
 import time
+import webbrowser
+from dataclasses import dataclass
+from urllib.parse import urlparse, parse_qs
 
 import requests
+import spotipy
+from spotipy.oauth2 import SpotifyOAuth
+
+from spotify_credentials import SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REDIRECT_PORT as PORT
+
+# ------------------------------------------------------------------------------------------------------------
+# Input parameters
 
 source = "Eminem"
 tempo_in_bpm = 180
 max_playlist_size = 100
 
 # ------------------------------------------------------------------------------------------------------------
-
-import http.server
-import random
-import socketserver
-import threading
-import webbrowser
-from dataclasses import dataclass
-from urllib.parse import urlparse, parse_qs
-
-import spotipy
-from spotipy.oauth2 import SpotifyOAuth
-
-from spotify_credentials import SPOTIFY_CLIENT_ID, SPOTIFY_CLIENT_SECRET, SPOTIFY_REDIRECT_PORT as PORT
 
 auth_manager = SpotifyOAuth(
     client_id=SPOTIFY_CLIENT_ID,
@@ -65,8 +66,14 @@ def fetch_authentication_token():
     if auth_code:
         return auth_manager.get_access_token(auth_code, as_dict=False)
     else:
-        # TODO error handling
-        print("Failed to retrieve authentication code.")
+        error_and_exit("Failed to retrieve authentication code.")
+
+
+def error_and_exit(error_msg):
+    red = '\033[91m'
+    endc = '\033[0m'
+    print(red + error_msg + endc)
+    exit(1)
 
 
 def get_user_id():
